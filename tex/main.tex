@@ -1,0 +1,164 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{preamble}
+\usepackage{import}
+\usepackage{csquotes}
+\usepackage{makeidx}
+\usepackage[backend=biber, sorting=none, style=phys]{biblatex}
+
+%\addbibresource{refs.bib}
+
+\title{Glass transition}
+\author{V}
+\date{2025}
+
+\begin{document}
+\maketitle
+\section{Introduction}
+It has been observed that by supercooling a liquid one can obtain a glass, where supercooling means to decrease abruptly the temperature below the freezing point. The temperature at which the "transition" happens is called $T_{g}$, however, this is not a critical temperature and the glass transition is not a phase transition. We can think of the glass as a solid far from equilibrium, that is it does not reach equilibrium in a physical and experimentally relevant time scale; for this reason, the actual distinction between a solid and a glass is not easy to perform and we cannot exactly determine the temperature $T_{g}$ that separates the two phases.
+\\
+The properties of the glass are the great viscosity, that is the glass flows really slowly;  viscous liquids at $T_{g}$ exhibit non-exponential relaxation of the parameters (we are keeping the temperature fixed); lastly, the transition, as we have already said, is not a phase transition, so we do not expect to see any discontinuity in the thermodynamic variables that are, then, smooth.
+
+
+\section{The Frederick-Anderson (FA) model}
+
+The FA model belongs to the category of the Kinetically Constrained Models (KCMs) and efficiently simulates a glass.
+\\
+The model in our case consists of a $2D$ $L\times L$ lattice where lies the variables $n_{i}$ which can only take two values $0,1$: $n_{i} = 1$ represents a mobile, low density, region; while $n_{i} = 0$ represents a less-mobile, high density, region in the glass. The coupling is very simple so the energy is equal to
+$$
+E = \sum_{i}n_{i}.
+$$
+The idea is that the rearrangement in the region (the spin flip in our metropolis algorithm) is possible only if there are enough low density regions, that is if there is at least one neighbour spin with $n_{j} = 1$.
+Let us now discuss our numerical implementation.
+
+\section{Metropolis algorithm}
+
+We start from a random site $(i, j)$ and we control if at least one neighbour site is in a mobile state ($n = 1$), if this condition is satisfied we try to flip the spin, otherwise we do nothing. The spin flip is done according to the metropolis probability, that is we take a random uniform variable $r$ between $0$ and $1$ and we compare it to the probability
+$$
+p = \min(1, e^{ -\beta\Delta E })
+$$
+where $\beta$ is the inverse temperature and $\Delta E$ is the energy difference after the flip: if we flip the spin from $0$ to $1$ we have $\Delta E = +1$, while if we flip from $1$ to $0$ we have $\Delta E = -1$. If we now have $r < p$, we flip the spin; otherwise we do nothing and we pass to another random site. This procedure is repeated $L^2$ times. This block of $L^2$ attempts is defined as one \textbf{Monte Carlo Step (MCS)}, or \textbf{sweep}, and serves as our fundamental unit of simulation time. One MCS corresponds to updating the entire lattice once on average.
+\\
+The first time, however, our system has to thermalize, in the Markovian sense not the physical sense, so we perform $5000$ sweeps of our system, after this we can start measuring quantities, in particular we will be interested in studying the concentration of mobile regions 
+$$
+\text{concentration} = \frac{\text{number of mobile sites with } n_{i} = 1}{L^2}
+$$
+over time $t$, where we consider the time of the system after a MCS.
+\\
+In other words, after thermalization, we evaluate the concentration at time t = 0 and then we perform $L^2$ times the metropolis algorithm where we try to flip spins; after that, we evaluate the concentration at $t = 1$ and then perform for other $L^2$ times the metropolis algorithm and so on.
+\\
+Now let us present the results: we will analyze the concentration at fixed (inverse) temperature, its scaling with the temperature and the auto correlations
+$$
+A(\tau) =  \langle C(t) C(t + \tau) \rangle - \langle C \rangle^2 .
+$$
+where $C(t)$ is the concentration over time.
+
+\section{Concentration at fixed temperature}
+
+The first figure Fig.~\ref{fig:conc_beta001} presents the value of the concentration for $\beta = 0.01$. We can see that the values oscillates around the mean value $C_{m} \sim 0.497$, we will study this value to study the dependence on the temperature. 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{../figs/glass_lattice_concentration_L128_beta0-01.png}
+    \caption{Concentration at $L= 128$ and $\beta = 0.01$}
+    \label{fig:conc_beta001}
+\end{figure}
+For $\beta = 1.0$ Fig.~\ref{fig:conc_beta1}, the behavior is similar, however the mean value is around $C_{m} \sim 0.27$.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{../figs/glass_lattice_concentration_L128_beta1-0.png}
+    \caption{Concentration at $L= 128$ and $\beta = 1.0$}
+    \label{fig:conc_beta1}
+\end{figure}
+
+\section{Concentration vs temperature}
+
+Plotting these values Fig.~\ref{fig:conc_temp} versus the inverse temperature $\beta$ we can see that, even though there are not enough points, there not seem to be a transition, but the decay of the concentration is smooth, following a straight line.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{../figs/glass_concentration_vs_temperature.png}
+    \caption{Concentration vs temperature}
+    \label{fig:conc_temp}
+\end{figure}
+
+\section{Autocorrelations}
+
+We now consider the decay of the autocorrelations Fig.~\ref{fig:autocorr}. As we can see from the two figures, for high values of the temperatures (low values of the inverse temperatures) the autocorrelations decay much faster.
+
+\begin{figure}[h]
+    \centering
+\begin{minipage}{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figs/glass_lattice_autocorr_L128_beta0-01.png}
+\end{minipage}
+\begin{minipage}{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figs/glass_lattice_autocorr_L128_beta1-0.png}
+\end{minipage}
+    \caption{Autocorrelations for $\beta  = 0.01$ (left) and $\beta = 1.0$ (right)}
+    \label{fig:autocorr}
+\end{figure}
+
+\section{Arrhenius glass}
+A glass can be of two types: it can be an Arrhenius glass, where the relaxation time of the autocorrelations scales exponentially with the inverse temperature $\beta$; or it can be a super-Arrhenius glass, with a much more complex behavior.
+\\
+We start by fitting our autocorrelation curves at various $\beta$ with an exponential $A e^{ -t/\tau }$, where $A$ is a constant and $\tau(\beta)$ is called the relaxation time. What we obtain is Fig.~\ref{fig:rel_time_temp}
+\begin{figure}
+    \centering
+    \begin{minipage}{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figs/rel_time_vs_temp.png}
+    \caption{Relaxation time vs temperature}
+    \label{fig:rel_time_temp}
+    \end{minipage}
+    \begin{minipage}{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figs/rel_time_vs_temp_log.png}
+    \caption{Semilog scale}
+    \label{fig:rel_time_temp_log}
+    \end{minipage}
+\end{figure}
+If we now use the log scale for the $y$-axis we can see that 
+$$
+\log\tau \propto \beta
+$$
+as shown in Fig.~\ref{fig:rel_time_temp_log}.
+This means that the relaxation time scales exponentially with the inverse temperature and so we are witnessing an Arrhenius glass in this region of temperature.
+
+\section[]{Behavior at $\beta > 2$}
+
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figs/rel_time_vs_temp_beta10.png}
+    \end{minipage}
+    \begin{minipage}{0.49\textwidth}
+    \includegraphics[width=\linewidth]{../figs/rel_time_vs_temp_beta10_log.png}
+    \end{minipage}
+    \caption{Relaxation time vs temperature at $\beta = 10$}
+    \label{fig:rel_time_temp_10}
+\end{figure}
+What we can see from these figures Figs.~\ref{fig:rel_time_temp_10} is that for high $\beta$, and so low temperatures, the behavior is not linear anymore and we start to see a super-Arrhenius glass, also called \textbf{fragile} glass.
+
+\section{Dynamic heterogeneity}
+
+The reason why the glass behaves in this way in the low temperature regime is found in the dynamic heterogeneity, that is the system breaks down, not uniformly, into liquid-like regions and solid-like regions. We can see this in our case: we count the number of times the site flips due to the Metropolis algorithm, after the system has reached thermalization, and we present these findings in a heatmap. 
+\\
+We find that for high temperatures (low $\beta$) the heatmap is uniform, that is there are no special regions; however, for low temperatures we start to notice the formation of regions with high mobility and regions with low mobility, as in the dynamic heterogeneity hypothesis.
+\\
+We present an example of these findings in the figure below, where we consider $\beta = 0.5$ Fig.~\ref{fig:heat_05} as high temperature and $\beta = 5.0, 10.0$ Figs.~\ref{fig:heat_5}, \ref{fig:heat_10} as low temperatures.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{../figs/glass_heatmap_beta0-5.png}
+    \caption{Mobility map at $\beta = 0.5$}
+    \label{fig:heat_05}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{../figs/glass_heatmap_beta5-0.png}
+    \caption{Mobility map at $\beta = 5.0$}
+    \label{fig:heat_5}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{../figs/glass_heatmap_beta10-0.png}
+    \caption{Mobility map at $\beta = 10.0$}
+    \label{fig:heat_10}
+\end{figure}
+\end{document}
