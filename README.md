@@ -7,3 +7,7 @@ We then present the mobility map, that is an heatmap that counts how many times 
 ![](Glass_transition/glass_heatmap_beta0-5.png)
 
 ![](Glass_transition/glass_heatmap_beta5-0.png)
+
+## To do
+
+Implement a jax version of this metropolis algorithm to test performances.
